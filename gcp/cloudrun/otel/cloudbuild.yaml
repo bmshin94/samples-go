@@ -2,7 +2,7 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
-      - --file=cloud-run-worker/Dockerfile
+      - --file=gcp/cloudrun/otel/Dockerfile
       - --tag=${_IMAGE}
       - .
 images:

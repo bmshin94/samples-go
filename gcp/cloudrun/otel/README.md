@@ -2,8 +2,8 @@
 
 This sample demonstrates how to run a long-running Temporal Worker on
 [Google Cloud Run](https://cloud.google.com/run) using the
-[`cloudrun`](https://pkg.go.dev/go.temporal.io/sdk/contrib/gcp/cloudrun) contrib
-package. It includes OpenTelemetry instrumentation that exports traces and
+[`cloudrun/otel`](https://pkg.go.dev/go.temporal.io/sdk/contrib/gcp/cloudrun/otel)
+contrib package. It includes OpenTelemetry instrumentation that exports traces and
 metrics through a Google-Built OpenTelemetry Collector sidecar to Google Cloud
 (Cloud Trace and Google Managed Service for Prometheus).
 
@@ -47,20 +47,20 @@ Start the worker (it will export OTLP telemetry to `localhost:4317`; run a local
 collector there if you want to see it, otherwise the export is a no-op):
 
 ```bash
-cd cloud-run-worker
+cd gcp/cloudrun/otel
 go run ./worker
 ```
 
 In another terminal, start a workflow:
 
 ```bash
-cd cloud-run-worker
+cd gcp/cloudrun/otel
 go run ./starter
 ```
 
-> **Note on the temporary module replace:** `go.temporal.io/sdk/contrib/gcp/cloudrun`
+> **Note on the temporary module replace:** `go.temporal.io/sdk/contrib/gcp/cloudrun/otel`
 > is not yet published, so `samples-go/go.mod` contains a local
-> `replace go.temporal.io/sdk/contrib/gcp/cloudrun => ../sdk-go/contrib/gcp/cloudrun`.
+> `replace go.temporal.io/sdk/contrib/gcp/cloudrun/otel => ../sdk-go/contrib/gcp/cloudrun/otel`.
 > This makes `go run`/`go build` work against the in-repo module, but a container
 > build (whose build context is the samples repo) cannot reach `../sdk-go`. Remove
 > the replace once the module is published; until then, build the image from a
@@ -71,21 +71,21 @@ go run ./starter
 1. Build and push the worker image with Cloud Build:
 
    ```bash
-   gcloud builds submit --config=cloud-run-worker/cloudbuild.yaml \
+   gcloud builds submit --config=gcp/cloudrun/otel/cloudbuild.yaml \
      --substitutions=_IMAGE=<REGION>-docker.pkg.dev/<PROJECT>/<REPO>/cloud-run-worker:latest .
    ```
 
 2. Store the collector config and Temporal API key in Secret Manager:
 
    ```bash
-   gcloud secrets create otel-collector-config --data-file=cloud-run-worker/otel-collector-config.yaml
+   gcloud secrets create otel-collector-config --data-file=gcp/cloudrun/otel/otel-collector-config.yaml
    printf '%s' "<your-temporal-api-key>" | gcloud secrets create temporal-api-key --data-file=-
    ```
 
 3. Edit `worker-pool.yaml` (image, region, Temporal connection) and deploy:
 
    ```bash
-   gcloud beta run worker-pools replace cloud-run-worker/worker-pool.yaml --region=<REGION>
+   gcloud beta run worker-pools replace gcp/cloudrun/otel/worker-pool.yaml --region=<REGION>
    ```
 
 The worker pool runs the worker alongside the Google-Built OpenTelemetry

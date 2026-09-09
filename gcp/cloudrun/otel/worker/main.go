@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	greeting "github.com/temporalio/samples-go/cloud-run-worker/greeting"
+	greeting "github.com/temporalio/samples-go/gcp/cloudrun/otel/greeting"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
-	"go.temporal.io/sdk/contrib/gcp/cloudrun"
+	"go.temporal.io/sdk/contrib/gcp/cloudrun/otel"
 	"go.temporal.io/sdk/worker"
 )
 
@@ -25,7 +25,7 @@ func main() {
 	// localhost:4317. The endpoint and service name fall back to environment
 	// variables (OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME,
 	// CLOUD_RUN_WORKER_POOL, K_SERVICE) that Cloud Run provides.
-	otelPlugin, err := cloudrun.NewOpenTelemetryPlugin(ctx, cloudrun.OpenTelemetryPluginOptions{})
+	otelPlugin, err := otel.NewPlugin(ctx, otel.PluginOptions{})
 	if err != nil {
 		log.Fatalln("Unable to create OpenTelemetry plugin", err)
 	}

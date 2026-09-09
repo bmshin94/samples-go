@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	greeting "github.com/temporalio/samples-go/cloud-run-worker/greeting"
+	greeting "github.com/temporalio/samples-go/gcp/cloudrun/otel/greeting"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
