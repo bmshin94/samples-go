@@ -1,20 +1,16 @@
-# Cloud Run Worker (identity + deployment versioning)
+# Cloud Run Worker (worker identity)
 
 This sample demonstrates how to run a long-running Temporal Worker on
 [Google Cloud Run](https://cloud.google.com/run) using the
 [`workerid`](https://pkg.go.dev/go.temporal.io/sdk/contrib/gcp/cloudrun/workerid) contrib package. The worker
-registers `workerid.Plugin` on its client; the plugin derives the worker's **identity** and **Worker
-Deployment Version** from the Cloud Run environment.
+registers `workerid.Plugin` on its client; the plugin derives the worker's **identity** from the
+Cloud Run environment.
 
-When the client connects, the plugin reads the Cloud Run instance metadata once and uses it to:
+When the client connects, the plugin reads the Cloud Run instance metadata once and sets a client
+**identity** of `<instanceID>@<revision>` (falling back to `<instanceID>@<name>`, then a bare
+`<instanceID>`), so each running instance is identifiable in the Temporal UI.
 
-- set a client **identity** of `<instanceID>@<revision>` (falling back to `<instanceID>@<name>`, then
-  a bare `<instanceID>`), so each running instance is identifiable in the Temporal UI, and
-- opt into [Worker Deployment Versioning](https://docs.temporal.io/worker-deployments) with a
-  version of `(deploymentName, buildID) = (<name>, <revision>)` and a **PINNED** default versioning
-  behavior. Cloud Run creates a new revision on every deploy, which makes it a natural build ID.
-
-Cloud Run **worker pools** are the recommended deployment for Temporal workers: they are continuous,
+Cloud Run **worker pools** are the recommended way to run Temporal workers: they are continuous,
 pull-based background workloads with no request ingress, which is exactly the workload a Temporal
 worker is. (The helper also works on Cloud Run **services** via `K_SERVICE` / `K_REVISION`.)
 
@@ -25,7 +21,7 @@ Workflow/Activity definitions.
 
 | File | Description |
 |------|-------------|
-| `worker/main.go` | Long-running worker entry point -- registers `workerid.Plugin` (which applies the derived identity and PINNED deployment version), registers Workflows/Activities, and shuts down gracefully on SIGTERM |
+| `worker/main.go` | Long-running worker entry point -- registers `workerid.Plugin` (which applies the derived identity), registers Workflows/Activities, and shuts down gracefully on SIGTERM |
 | `starter/main.go` | Helper program to start a Workflow execution against the worker |
 | `greeting/workflow.go` | Sample Workflow that executes a greeting Activity |
 | `greeting/activity.go` | Sample Activity that returns a greeting string |
@@ -48,7 +44,7 @@ key for Temporal Cloud as needed.
 ## Deploy to a Cloud Run worker pool
 
 Deploy the worker straight from source. Cloud Run injects `CLOUD_RUN_WORKER_POOL` and
-`CLOUD_RUN_REVISION`, which the plugin reads to build the identity and deployment version:
+`CLOUD_RUN_REVISION`, which the plugin reads to build the worker identity:
 
 ```bash
 gcloud run worker-pools deploy temporal-cloud-run-worker \
@@ -58,9 +54,8 @@ gcloud run worker-pools deploy temporal-cloud-run-worker \
 ```
 
 `gcloud run worker-pools deploy` builds the container (using the provided `Dockerfile`), pushes it,
-and rolls out a new **revision** to the worker pool. Because the worker pins workflows to its
-deployment version, existing workflows keep running on the revision that started them until you move
-them; new workflows start on the newest revision. Depending on your `gcloud` version, worker pools
+and rolls out a new **revision** to the worker pool. Each instance then reports a worker identity
+derived from its unique instance ID and revision. Depending on your `gcloud` version, worker pools
 may be under the `beta` track (`gcloud beta run worker-pools deploy ...`).
 
 > Cloud Run does **not** expose the instance ID as an environment variable, so the plugin fetches it

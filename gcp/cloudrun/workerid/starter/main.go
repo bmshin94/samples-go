@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	greeting "github.com/temporalio/samples-go/cloud-run-worker-id/greeting"
+	greeting "github.com/temporalio/samples-go/gcp/cloudrun/workerid/greeting"
 
 	"go.temporal.io/sdk/client"
 )
